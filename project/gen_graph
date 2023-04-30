@@ -1,0 +1,5 @@
+#!/bin/bash -x
+
+python2 network_graph.py > graph.dot
+dot -Tpng graph.dot -o graph.png
+dot -Tpdf graph.dot -o graph.pdf
