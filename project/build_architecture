@@ -56,28 +56,16 @@ ip netns exec routB sysctl net.ipv4.conf.all.forwarding=1
 # configurer rout1
 ip link add rout1-eth0 type veth peer name resC-rout1
 ip link add rout1-eth1 type veth peer name resD-rout1
-ip link add rout1-eth100 type veth peer name resD-rout1-100
-ip link add rout1-eth200 type veth peer name resD-rout1-200
 ip link set rout1-eth0 netns rout1
 ip link set rout1-eth1 netns rout1
-ip link set rout1-eth100 netns rout1
-ip link set rout1-eth200 netns rout1
 ovs-vsctl add-port resC resC-rout1
-ovs-vsctl add-port resD resD-rout1-100 tag=100
-ovs-vsctl add-port resD resD-rout1-200 tag=200
 ovs-vsctl add-port resD resD-rout1 trunks=100,200
 ip link set dev resC-rout1 up
 ip link set dev resD-rout1 up
-ip link set dev resD-rout1-100 up
-ip link set dev resD-rout1-200 up
 ip netns exec rout1 ip link set dev lo up
 ip netns exec rout1 ip link set dev rout1-eth0 up
 ip netns exec rout1 ip link set dev rout1-eth1 up
-ip netns exec rout1 ip link set dev rout1-eth100 up
-ip netns exec rout1 ip link set dev rout1-eth200 up
 ip netns exec rout1 ip a add dev rout1-eth0 172.16.1.253/24
-ip netns exec rout1 ip a add dev rout1-eth100 192.168.100.254/24 brd 192.168.100.255
-ip netns exec rout1 ip a add dev rout1-eth200 192.168.200.254/24 brd 192.168.200.255
 ip netns exec rout1 ip r add 10.87.0.0/24 via 172.16.1.254 dev rout1-eth0
 ip netns exec rout1 ip r add 172.16.2.0/24 via 172.16.1.254 dev rout1-eth0
 ip netns exec rout1 sysctl net.ipv4.conf.all.forwarding=1
@@ -85,28 +73,16 @@ ip netns exec rout1 sysctl net.ipv4.conf.all.forwarding=1
 # configurer rout2
 ip link add rout2-eth0 type veth peer name resB-rout2
 ip link add rout2-eth1 type veth peer name resE-rout2
-ip link add rout2-eth100 type veth peer name resE-rout2-100
-ip link add rout2-eth200 type veth peer name resE-rout2-200
 ip link set rout2-eth0 netns rout2
 ip link set rout2-eth1 netns rout2
-ip link set rout2-eth100 netns rout2
-ip link set rout2-eth200 netns rout2
 ovs-vsctl add-port resB resB-rout2
-ovs-vsctl add-port resE resE-rout2-100 tag=100
-ovs-vsctl add-port resE resE-rout2-200 tag=200
 ovs-vsctl add-port resE resE-rout2 trunks=100,200
 ip link set dev resB-rout2 up
 ip link set dev resE-rout2 up
-ip link set dev resE-rout2-100 up
-ip link set dev resE-rout2-200 up
 ip netns exec rout2 ip link set dev lo up
 ip netns exec rout2 ip link set dev rout2-eth0 up
 ip netns exec rout2 ip link set dev rout2-eth1 up
-ip netns exec rout2 ip link set dev rout2-eth100 up
-ip netns exec rout2 ip link set dev rout2-eth200 up
 ip netns exec rout2 ip a add dev rout2-eth0 172.16.2.253/24
-ip netns exec rout2 ip a add dev rout2-eth100 192.168.100.253/24 brd 192.168.100.255
-ip netns exec rout2 ip a add dev rout2-eth200 192.168.200.253/24 brd 192.168.200.255
 ip netns exec rout2 ip r add 10.87.0.0/24 via 172.16.2.254 dev rout2-eth0
 ip netns exec rout2 ip r add 172.16.1.0/24 via 172.16.2.254 dev rout2-eth0
 ip netns exec rout2 sysctl net.ipv4.conf.all.forwarding=1

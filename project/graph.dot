@@ -45,18 +45,6 @@ subgraph cluster_2 {
                 <tr><td align="left">IP: 172.16.1.253/24</td></tr>
             </table>
         >];
-        "rout1-eth1.100" [label=<
-            <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
-                <tr><td bgcolor="lightblue"><b>rout1-eth1.100</b></td></tr>
-                <tr><td align="left">IP: 192.168.100.254/24</td></tr>
-            </table>
-        >];
-        "rout1-eth1.200" [label=<
-            <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
-                <tr><td bgcolor="lightblue"><b>rout1-eth1.200</b></td></tr>
-                <tr><td align="left">IP: 192.168.200.254/24</td></tr>
-            </table>
-        >];
 	}
 subgraph cluster_3 {
 		label = rout2;
@@ -65,18 +53,6 @@ subgraph cluster_3 {
             <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
                 <tr><td bgcolor="lightblue"><b>rout2-eth0</b></td></tr>
                 <tr><td align="left">IP: 172.16.2.253/24</td></tr>
-            </table>
-        >];
-        "rout2-eth1.100" [label=<
-            <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
-                <tr><td bgcolor="lightblue"><b>rout2-eth1.100</b></td></tr>
-                <tr><td align="left">IP: 192.168.100.253/24</td></tr>
-            </table>
-        >];
-        "rout2-eth1.200" [label=<
-            <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
-                <tr><td bgcolor="lightblue"><b>rout2-eth1.200</b></td></tr>
-                <tr><td align="left">IP: 192.168.200.253/24</td></tr>
             </table>
         >];
 	}
