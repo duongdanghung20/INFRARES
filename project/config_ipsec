@@ -1,0 +1,36 @@
+#!/bin/bash -x
+
+# Choose a random SPI (Security Parameters Index)
+index=0x12345678
+
+# Generate random secret keys for symmetric encryption: AH SAs using 256 bit (32 byte) long and ESP SAs using 160 bit (20 byte) long keys
+ah_key_1=$(openssl rand -hex 32)
+esp_key_1=$(openssl rand -hex 20)
+ah_key_2=$(openssl rand -hex 32)
+esp_key_2=$(openssl rand -hex 20)
+
+# # Config IPsec on rout1 end
+# Flush the SAD and SPD
+sudo ip netns exec rout1 ip xfrm state flush
+sudo ip netns exec rout1 ip xfrm policy flush
+
+# Security association
+sudo ip netns exec rout1 ip xfrm state add src 172.16.1.253 dst 172.16.2.253 proto esp spi $index reqid $index mode transport auth sha256 0x$ah_key_1 enc "rfc3686(ctr(aes))" 0x$esp_key_1
+sudo ip netns exec rout1 ip xfrm state add src 172.16.2.253 dst 172.16.1.253 proto esp spi $index reqid $index mode transport auth sha256 0x$ah_key_2 enc "rfc3686(ctr(aes))" 0x$esp_key_2
+
+# Security policies
+sudo ip netns exec rout1 ip xfrm policy add src 172.16.1.253 dst 172.16.2.253 dir out tmpl src 172.16.1.253 dst 172.16.2.253 proto esp reqid $index mode transport
+sudo ip netns exec rout1 ip xfrm policy add src 172.16.2.253 dst 172.16.1.253 dir in tmpl src 172.16.2.253 dst 172.16.1.253 proto esp reqid $index mode transport
+
+# # Config IPsec on rout2 end
+# Flush the SAD and SPD
+sudo ip netns exec rout2 ip xfrm state flush
+sudo ip netns exec rout2 ip xfrm policy flush
+
+# Security association
+sudo ip netns exec rout2 ip xfrm state add src 172.16.1.253 dst 172.16.2.253 proto esp spi $index reqid $index mode transport auth sha256 0x$ah_key_1 enc "rfc3686(ctr(aes))" 0x$esp_key_1
+sudo ip netns exec rout2 ip xfrm state add src 172.16.2.253 dst 172.16.1.253 proto esp spi $index reqid $index mode transport auth sha256 0x$ah_key_2 enc "rfc3686(ctr(aes))" 0x$esp_key_2
+
+# Security policies
+sudo ip netns exec rout2 ip xfrm policy add src 172.16.1.253 dst 172.16.2.253 dir in tmpl src 172.16.1.253 dst 172.16.2.253 proto esp reqid $index mode transport
+sudo ip netns exec rout2 ip xfrm policy add src 172.16.2.253 dst 172.16.1.253 dir out tmpl src 172.16.2.253 dst 172.16.1.253 proto esp reqid $index mode transport

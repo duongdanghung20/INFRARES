@@ -20,3 +20,6 @@ for DIRECTORY in $DIRECTORIES
 do
 	sudo rm $DIRECTORY/*
 done
+
+# Flush NetFilter rules for table NAT
+sudo iptables -t nat -F

@@ -131,7 +131,7 @@ ip netns exec poste4 ip link set dev poste4-eth0 up
 ip netns exec poste4 ip a add dev poste4-eth0 192.168.200.2/24
 ip netns exec poste4 ip r add default dev poste4-eth0
 
-# # Config tunnel rout1
+# Config tunnel rout1
 ip netns exec rout1 ip l2tp add tunnel remote 172.16.2.253 local 172.16.1.253 encap ip tunnel_id 3000 peer_tunnel_id 4000
 ip netns exec rout1 ip l2tp add session tunnel_id 3000 session_id 1000 peer_session_id 2000
 ip netns exec rout1 ip link set l2tpeth0 up
@@ -148,7 +148,7 @@ ip netns exec rout1 ip addr add 192.168.100.254/24 dev tunnel.100
 ip netns exec rout1 ip addr add 192.168.200.254/24 dev tunnel.200
 ip netns exec rout1 ip link set dev l2tpeth0 mtu 1500
 
-# # Config tunnel rout2
+# Config tunnel rout2
 ip netns exec rout2 ip l2tp add tunnel remote 172.16.1.253 local 172.16.2.253 encap ip tunnel_id 4000 peer_tunnel_id 3000
 ip netns exec rout2 ip l2tp add session tunnel_id 4000 session_id 2000 peer_session_id 1000
 ip netns exec rout2 ip link set l2tpeth0 up
@@ -164,3 +164,50 @@ ip netns exec rout2 ip link set tunnel.200 up
 ip netns exec rout2 ip addr add 192.168.100.253/24 dev tunnel.100
 ip netns exec rout2 ip addr add 192.168.200.253/24 dev tunnel.200
 ip netns exec rout2 ip link set l2tpeth0 mtu 1500
+
+
+# # Config tunnel GRETAP rout1
+# sudo ip netns exec rout1 ip l add eoip1 type gretap remote 172.16.2.253 local 172.16.1.253 nopmtudisc
+# sudo ip netns exec rout1 ip l set dev eoip1 up
+# sudo ip netns exec rout1 brctl addbr tunnel
+# sudo ip netns exec rout1 brctl addif tunnel eoip1
+# sudo ip netns exec rout1 brctl addif tunnel rout1-eth1
+# sudo ip netns exec rout1 ip l set tunnel up
+# sudo ip netns exec rout1 ip l add link tunnel name tunnel.100 type vlan id 100
+# sudo ip netns exec rout1 ip l set tunnel.100 up
+# sudo ip netns exec rout1 ip l add link tunnel name tunnel.200 type vlan id 200                                     
+# sudo ip netns exec rout1 ip l set tunnel.200 up
+# sudo ip netns exec rout1 ip a add 192.168.100.254/24 dev tunnel.100
+# sudo ip netns exec rout1 ip a add 192.168.200.254/24 dev tunnel.200
+
+# # Config tunnel GRETAP rout2
+# sudo ip netns exec rout2 ip l add eoip1 type gretap remote 172.16.1.253 local 172.16.2.253 nopmtudisc
+# sudo ip netns exec rout2 ip l set dev eoip1 up
+# sudo ip netns exec rout2 brctl addbr tunnel
+# sudo ip netns exec rout2 brctl addif tunnel eoip1
+# sudo ip netns exec rout2 brctl addif tunnel rout2-eth1
+# sudo ip netns exec rout2 ip l set tunnel up
+# sudo ip netns exec rout2 ip l add link tunnel name tunnel.100 type vlan id 100
+# sudo ip netns exec rout2 ip l set tunnel.100 up
+# sudo ip netns exec rout2 ip l add link tunnel name tunnel.200 type vlan id 200                                     
+# sudo ip netns exec rout2 ip l set tunnel.200 up
+# sudo ip netns exec rout2 ip a add 192.168.100.253/24 dev tunnel.100
+# sudo ip netns exec rout2 ip a add 192.168.200.253/24 dev tunnel.200
+
+# Provide Internet access through the internet switch
+ip l add veth0 type veth peer name internet-real
+ovs-vsctl add-port internet internet-real
+ip l set dev internet-real up
+ip l set dev veth0 up
+ip a add dev veth0 10.87.0.254/24
+
+# Config default route for the routers to access the internet
+ip netns exec routA ip r add default via 10.87.0.254 dev routA-eth1
+ip netns exec routB ip r add default via 10.87.0.254 dev routB-eth1
+ip netns exec rout1 ip r add default via 172.16.1.254 dev rout1-eth0
+ip netns exec rout2 ip r add default via 172.16.2.254 dev rout2-eth0
+sysctl net.ipv4.conf.all.forwarding=1
+
+ip r add 172.16.1.0/24 via 10.87.0.1 dev veth0
+ip r add 172.16.2.0/24 via 10.87.0.2 dev veth0
+iptables -t nat -o wlo1 -A POSTROUTING -j MASQUERADE
