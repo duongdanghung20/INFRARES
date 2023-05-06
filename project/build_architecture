@@ -203,15 +203,16 @@ ip l set dev internet-real up
 ip l set dev veth0 up
 ip a add dev veth0 10.87.0.254/24
 
-# Config default route for the routers to access the internet
+# Config the routing tables for the routers
 ip netns exec routA ip r add default via 10.87.0.254 dev routA-eth1
 ip netns exec routB ip r add default via 10.87.0.254 dev routB-eth1
 ip netns exec rout1 ip r add default via 172.16.1.254 dev rout1-eth0
 ip netns exec rout2 ip r add default via 172.16.2.254 dev rout2-eth0
-sysctl net.ipv4.conf.all.forwarding=1
 
+# Config the routing table of the Linux machine
+sysctl net.ipv4.conf.all.forwarding=1
 ip r add 172.16.1.0/24 via 10.87.0.1 dev veth0
 ip r add 172.16.2.0/24 via 10.87.0.2 dev veth0
-iptables -t nat -o wlo1 -A POSTROUTING -j MASQUERADE
 
-# ip netns exec rout1 iptables -t nat -o rout1-eth1 -A POSTROUTING -j MASQUERADE
+iptables -t nat -o wlo1 -A POSTROUTING -j MASQUERADE
+ip netns exec rout1 iptables -t nat -o rout1-eth0 -A POSTROUTING -j MASQUERADE
