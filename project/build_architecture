@@ -96,7 +96,7 @@ ip link set dev resE-poste1 up
 ip netns exec poste1 ip link set dev lo up
 ip netns exec poste1 ip link set dev poste1-eth0 up
 ip netns exec poste1 ip a add dev poste1-eth0 192.168.100.1/24
-ip netns exec poste1 ip r add default dev poste1-eth0 via 192.168.100.253
+ip netns exec poste1 ip r add default dev poste1-eth0 via 192.168.100.254
 
 # configure poste2
 ip link add poste2-eth0 type veth peer name resE-poste2
@@ -107,7 +107,7 @@ ip link set dev resE-poste2 up
 ip netns exec poste2 ip link set dev lo up
 ip netns exec poste2 ip link set dev poste2-eth0 up
 ip netns exec poste2 ip a add dev poste2-eth0 192.168.200.1/24
-ip netns exec poste2 ip r add default dev poste2-eth0 via 192.168.200.253
+ip netns exec poste2 ip r add default dev poste2-eth0 via 192.168.200.254
 
 # configure poste3
 ip link add poste3-eth0 type veth peer name resD-poste3
@@ -205,14 +205,16 @@ ip a add dev veth0 10.87.0.254/24
 
 # Config the routing tables for the routers
 ip netns exec routA ip r add default via 10.87.0.254 dev routA-eth1
-ip netns exec routB ip r add default via 10.87.0.254 dev routB-eth1
 ip netns exec rout1 ip r add default via 172.16.1.254 dev rout1-eth0
-ip netns exec rout2 ip r add default via 172.16.2.254 dev rout2-eth0
 
 # Config the routing table of the Linux machine
 sysctl net.ipv4.conf.all.forwarding=1
 ip r add 172.16.1.0/24 via 10.87.0.1 dev veth0
 ip r add 172.16.2.0/24 via 10.87.0.2 dev veth0
 
-iptables -t nat -o wlo1 -A POSTROUTING -j MASQUERADE
-ip netns exec rout1 iptables -t nat -o rout1-eth0 -A POSTROUTING -j MASQUERADE
+iptables -t nat -A POSTROUTING -o wlo1 -j MASQUERADE
+ip netns exec rout1 iptables -t nat -A POSTROUTING -o rout1-eth0 -j MASQUERADE
+# ip netns exec rout2 iptables -t nat -A POSTROUTING -o rout2-eth0 -j MASQUERADE
+ip netns exec rout2 iptables -t nat -A PREROUTING -i rout2-eth1 -s 192.168.100.0/24 -j DNAT --to-destination 192.168.100.254
+# ip netns exec rout2 iptables -t nat -A PREROUTING -i rout2-eth1 -s 192.168.200.0/24 -j DNAT --to-destination 192.168.200.254
+# ip netns exec rout1 iptables -t nat -i l2tpeth0 -A PREROUTING -j MASQUERADE
