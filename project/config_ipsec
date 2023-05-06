@@ -1,5 +1,6 @@
 #!/bin/bash -x
 
+# # # EX 5
 # Choose a random SPI (Security Parameters Index)
 index=0x12345678
 
