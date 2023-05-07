@@ -206,6 +206,8 @@ ip a add dev veth0 10.87.0.254/24
 # Config the routing tables for the routers
 ip netns exec routA ip r add default via 10.87.0.254 dev routA-eth1
 ip netns exec rout1 ip r add default via 172.16.1.254 dev rout1-eth0
+ip netns exec routB ip r add default via 10.87.0.254 dev routB-eth1
+ip netns exec rout2 ip r add default via 172.16.2.254 dev rout2-eth0
 
 # Config the routing table of the Linux machine
 sysctl net.ipv4.conf.all.forwarding=1
@@ -214,7 +216,22 @@ ip r add 172.16.2.0/24 via 10.87.0.2 dev veth0
 
 iptables -t nat -A POSTROUTING -o wlo1 -j MASQUERADE
 ip netns exec rout1 iptables -t nat -A POSTROUTING -o rout1-eth0 -j MASQUERADE
-# ip netns exec rout2 iptables -t nat -A POSTROUTING -o rout2-eth0 -j MASQUERADE
-ip netns exec rout2 iptables -t nat -A PREROUTING -i rout2-eth1 -s 192.168.100.0/24 -j DNAT --to-destination 192.168.100.254
-# ip netns exec rout2 iptables -t nat -A PREROUTING -i rout2-eth1 -s 192.168.200.0/24 -j DNAT --to-destination 192.168.200.254
-# ip netns exec rout1 iptables -t nat -i l2tpeth0 -A PREROUTING -j MASQUERADE
+ip netns exec rout2 iptables -t nat -A POSTROUTING -o rout2-eth0 -j MASQUERADE
+
+# # EX7
+# Isolate VLAN100 and VLAN200 using iptables
+ip netns exec rout1 iptables -t mangle -A PREROUTING -i tunnel.100 -s 192.168.100.0/24 -d 192.168.200.0/24 -j MARK --set-mark 1
+ip netns exec rout1 iptables -t mangle -A PREROUTING -i tunnel.200 -s 192.168.200.0/24 -d 192.168.100.0/24 -j MARK --set-mark 2
+ip netns exec rout1 iptables -t filter -A FORWARD -m mark --mark 1 -j DROP
+ip netns exec rout1 iptables -t filter -A FORWARD -m mark --mark 2 -j DROP
+
+ip netns exec rout2 iptables -t mangle -A PREROUTING -i tunnel.100 -s 192.168.100.0/24 -d 192.168.200.0/24 -j MARK --set-mark 1
+ip netns exec rout2 iptables -t mangle -A PREROUTING -i tunnel.200 -s 192.168.200.0/24 -d 192.168.100.0/24 -j MARK --set-mark 2
+ip netns exec rout2 iptables -t filter -A FORWARD -m mark --mark 1 -j DROP
+ip netns exec rout2 iptables -t filter -A FORWARD -m mark --mark 2 -j DROP
+
+# Isolate VLAN100 and VLAN200 using Routing Policies
+ip netns exec rout1 ip rule add from 192.168.100.0/24 to 192.168.200.0/24 blackhole
+ip netns exec rout1 ip rule add from 192.168.200.0/24 to 192.168.100.0/24 blackhole
+ip netns exec rout2 ip rule add from 192.168.100.0/24 to 192.168.200.0/24 blackhole
+ip netns exec rout2 ip rule add from 192.168.200.0/24 to 192.168.100.0/24 blackhole
